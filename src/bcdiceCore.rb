@@ -1387,7 +1387,16 @@ class BCDice
     return suc
   end
 
-  ####################       ゲーム別成功度判定      ########################
+  # ゲーム別成功度判定
+  # @param [Integer | String] total_n 補正込みの最終的な達成値
+  # @param [Integer | String] dice_n ダイス目のみの達成値
+  # @param [String] signOfInequality 判定の不等号 "<=", ">=" など
+  # @param [Integer | String] diff 目標値
+  # @param [Integer] dice_cnt ダイスを振った回数
+  # @param [Integer] dice_max 振ったダイスの面数の最大値
+  # @param [Integer] n1 出目１が出た数
+  # @param [Integer] n_max 出目の最大値
+  # @return [String]
   def check_suc(*check_param)
     total_n, dice_n, signOfInequality, diff, dice_cnt, dice_max, n1, n_max = *check_param
 

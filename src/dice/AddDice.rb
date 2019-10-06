@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+require "utils/AddDiceEvaluator"
 
 class AddDice
   def initialize(bcdice, diceBot)
@@ -14,6 +15,14 @@ class AddDice
 
     m = %r{(^|\s)S?(([\d\+\*\-]*[\d]+D[\d/UR@]*[\d\+\*\-D/UR]*)(([<>=]+)([?\-\d]+))?)($|\s)}i.match(string)
     return "1" unless m
+
+    evaluator = AddDiceEvaluator.new
+    result = evaluator.eval(string, @diceBot.sortType, @bcdice, @diceBot)
+    if evaluator.error?
+      result = 1
+    end
+
+    return "#{@nick_e}: (#{string}) ＞ #{result}"
 
     string = m[2]
     judgeText = m[4] # '>=10'といった成否判定文字

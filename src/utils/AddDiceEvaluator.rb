@@ -21,6 +21,7 @@ class AddDiceEvaluator
     @sides_max = 0
     @n1 = 0 # 出目１の回数
     @n_max = 0 # 出目の最大値
+    @dice_total = 0 # 出目の合計
 
     return expr()
   end
@@ -32,7 +33,7 @@ class AddDiceEvaluator
   private
 
   def tokenize(expr)
-    tokens = expr.upcase.gsub(%r{[\(\)\+\-\*\/DRUS]|[<>=!]+}) { |e| " #{e} " }.split(' ')
+    tokens = expr.upcase.gsub(%r{[\(\)\+\-\*\/DRUS\?]|[<>=!]+}) { |e| " #{e} " }.split(' ')
     if tokens[0] == "S"
       tokens.shift()
     end
@@ -59,7 +60,7 @@ class AddDiceEvaluator
 
   def expr
     ret = add(true)
-    output = if ret.expr.match(/^\d+\[\d+\]$/)
+    output = if ret.expr.match(/^\d+\[\d*\]$/)
       ret.value.to_s
     else
       "#{ret.expr} ＞ #{ret.value}"
@@ -68,9 +69,9 @@ class AddDiceEvaluator
     condop = try_condop()
     if condop
       @dicebot.setDiceText(output)
-      cond = add(false)
+      cond = consume("?") ? "?" : add(false).value
 
-      msg = @bcdice.check_suc(ret.value, ret.value, condop, cond.value, @roll_times, @sides_max, @n1, @n_max)
+      msg = @bcdice.check_suc(ret.value, @dice_total, condop, cond, @roll_times, @sides_max, @n1, @n_max)
       output += msg
     end
 
@@ -150,6 +151,7 @@ class AddDiceEvaluator
       @sides_max = sides if @sides_max < sides
       @n1 += n1_count
       @n_max = n_max if n_max > @n_max
+      @dice_total += value
       return Result.new(value, "#{value}[#{text}]")
     end
 
@@ -167,6 +169,7 @@ class AddDiceEvaluator
       @sides_max = sides if @sides_max < sides
       @n1 += n1_count
       @n_max = n_max if n_max > @n_max
+      @dice_total += value
       ret = Result.new(value, "#{value}[#{text}]")
     end
 

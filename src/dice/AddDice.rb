@@ -17,7 +17,7 @@ class AddDice
     return "1" unless m
 
     evaluator = AddDiceEvaluator.new
-    result = evaluator.eval(string, @diceBot.sortType, @bcdice, @diceBot)
+    result = evaluator.eval(string, @diceBot.sortType & 1, @bcdice, @diceBot)
     if evaluator.error?
       result = 1
     end

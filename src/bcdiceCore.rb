@@ -57,26 +57,6 @@ require 'dice/AddDice'
 require 'dice/UpperDice'
 require 'dice/RerollDice'
 
-class BCDiceMaker
-  def initialize
-    @diceBot = DiceBot.new
-
-    @master = ""
-    @quitFunction = nil
-  end
-
-  attr_accessor :master
-  attr_accessor :quitFunction
-  attr_accessor :diceBot
-  attr_accessor :diceBotPath
-
-  def newBcDice
-    bcdice = BCDice.new(@diceBot)
-
-    return bcdice
-  end
-end
-
 class BCDice
   # 設定コマンドのパターン
   SET_COMMAND_PATTERN = /\Aset\s+(.+)/i.freeze

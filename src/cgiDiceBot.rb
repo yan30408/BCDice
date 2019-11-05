@@ -121,8 +121,7 @@ class CgiDiceBot
     bcdice.setChannel(channel)
     bcdice.recievePublicMessage(nick_e)
 
-    rollResult = @rollResult
-    @rollResult = ""
+    rollResult = bcdice.roll_result
 
     randResults = bcdice.getRandResults
 
@@ -130,10 +129,8 @@ class CgiDiceBot
   end
 
   def newBcDice
-    if @bcdice.nil?
-      bcdiceMaker = BCDiceMaker.new
-      @bcdice = bcdiceMaker.newBcDice()
-    end
+    bcdiceMaker = BCDiceMaker.new
+    @bcdice = bcdiceMaker.newBcDice()
 
     return @bcdice
   end
@@ -141,19 +138,6 @@ class CgiDiceBot
   # Unused method
   def getGameCommandInfos(_dir, _prefix)
     return []
-  end
-
-  def sendMessage(_to, message)
-    @rollResult += message
-  end
-
-  def sendMessageToOnlySender(_nick_e, message)
-    @isSecret = true
-    @rollResult += message
-  end
-
-  def sendMessageToChannels(message)
-    @rollResult += message
   end
 end
 

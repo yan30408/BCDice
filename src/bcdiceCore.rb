@@ -83,6 +83,8 @@ class BCDice
 
   VERSION = "2.03.04".freeze
 
+  attr_reader :roll_result
+
   def initialize(diceBot)
     setDiceBot(diceBot)
 
@@ -91,6 +93,8 @@ class BCDice
     @rands = nil
     @isKeepSecretDice = true
     @randResults = nil
+
+    @roll_result = ""
   end
 
   # Unused method
@@ -116,7 +120,7 @@ class BCDice
   attr_reader :nick_e
 
   def setIrcClient(client)
-    @ircClient = client
+    # empty
   end
 
   def setMessage(message)
@@ -1276,17 +1280,16 @@ class BCDice
   end
 
   def sendMessage(to, message)
-    debug("sendMessage to, message", to, message)
-    @ircClient.sendMessage(to, message)
+    @roll_result += message
   end
 
+  # secret dice
   def sendMessageToOnlySender(message)
-    debug("sendMessageToOnlySender message", message)
-    @ircClient.sendMessageToOnlySender("", message)
+    @roll_result += message
   end
 
   def sendMessageToChannels(message)
-    @ircClient.sendMessageToChannels(message)
+    @roll_result += message
   end
 
   ####################         テキスト前処理        ########################

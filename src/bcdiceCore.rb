@@ -71,7 +71,7 @@ class BCDiceMaker
   attr_accessor :diceBotPath
 
   def newBcDice
-    bcdice = BCDice.new(self, @diceBot)
+    bcdice = BCDice.new(@diceBot)
 
     return bcdice
   end
@@ -85,9 +85,7 @@ class BCDice
 
   attr_reader :cardTrader
 
-  def initialize(parent, diceBot)
-    @parent = parent
-
+  def initialize(diceBot)
     setDiceBot(diceBot)
 
     @nick_e = ""
@@ -117,7 +115,6 @@ class BCDice
 
     @diceBot = diceBot
     @diceBot.bcdice = self
-    @parent.diceBot = @diceBot
   end
 
   attr_reader :nick_e
@@ -165,18 +162,11 @@ class BCDice
   end
 
   def quit
-    @ircClient.quit
-
-    if @parent.quitFunction.nil?
-      sleepForIrc(3)
-      exit(0)
-    else
-      @parent.quitFunction.call()
-    end
+    # empty
   end
 
   def setQuitFuction(func)
-    @parent.quitFunction = func
+    # empty
   end
 
   def setCommand(arg)
@@ -230,38 +220,19 @@ class BCDice
   end
 
   def setMaster()
-    if @parent.master != ""
-      setMasterWhenMasterAlreadySet()
-    else
-      setMasterWhenMasterYetSet()
-    end
+    # empty
   end
 
   def setMasterWhenMasterAlreadySet()
-    if @nick_e == @parent.master
-      setMasterByCurrentMasterOwnself()
-    else
-      sendMessageToOnlySender("Masterは#{@parent.master}さんになっています")
-    end
+    # empty
   end
 
   def setMasterByCurrentMasterOwnself()
-    if @tnick != ""
-      @parent.master = @tnick
-      sendMessageToChannels("#{@parent.master}さんをMasterに設定しました")
-    else
-      @parent.master = ""
-      sendMessageToChannels("Master設定を解除しました")
-    end
+    # empty
   end
 
   def setMasterWhenMasterYetSet()
-    if @tnick != ""
-      @parent.master = @tnick
-    else
-      @parent.master = @nick_e
-    end
-    sendMessageToChannels("#{@parent.master}さんをMasterに設定しました")
+    # empty
   end
 
   def setGame()
@@ -270,7 +241,7 @@ class BCDice
   end
 
   def isMaster()
-    return ((@nick_e == @parent.master) || (@parent.master == ""))
+    # empty
   end
 
   def setDisplayMode()

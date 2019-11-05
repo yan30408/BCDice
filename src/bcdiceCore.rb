@@ -76,7 +76,7 @@ class BCDiceMaker
   attr_accessor :diceBotPath
 
   def newBcDice
-    bcdice = BCDice.new(self, @cardTrader, @diceBot, @counterInfos, nil)
+    bcdice = BCDice.new(self, @cardTrader, @diceBot, @counterInfos)
 
     return bcdice
   end
@@ -90,7 +90,7 @@ class BCDice
 
   attr_reader :cardTrader
 
-  def initialize(parent, cardTrader, diceBot, counterInfos, tableFileData)
+  def initialize(parent, cardTrader, diceBot, counterInfos)
     @parent = parent
 
     setDiceBot(diceBot)
@@ -98,7 +98,6 @@ class BCDice
     @cardTrader = cardTrader
     @cardTrader.setBcDice(self)
     @counterInfos = counterInfos
-    @tableFileData = tableFileData
 
     @nick_e = ""
     @tnick = ""

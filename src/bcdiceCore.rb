@@ -50,7 +50,6 @@ $secretDiceResultHolder = {}
 $plotPrintChannels = {}
 $point_counter = {}
 
-require 'CardTrader'
 require 'diceBot/DiceBot'
 require 'diceBot/DiceBotLoader'
 require 'diceBot/DiceBotLoaderList'
@@ -61,8 +60,6 @@ require 'dice/RerollDice'
 class BCDiceMaker
   def initialize
     @diceBot = DiceBot.new
-    @cardTrader = CardTrader.new
-    @cardTrader.initValues
 
     @master = ""
     @quitFunction = nil
@@ -74,7 +71,7 @@ class BCDiceMaker
   attr_accessor :diceBotPath
 
   def newBcDice
-    bcdice = BCDice.new(self, @cardTrader, @diceBot)
+    bcdice = BCDice.new(self, @diceBot)
 
     return bcdice
   end
@@ -88,13 +85,10 @@ class BCDice
 
   attr_reader :cardTrader
 
-  def initialize(parent, cardTrader, diceBot)
+  def initialize(parent, diceBot)
     @parent = parent
 
     setDiceBot(diceBot)
-
-    @cardTrader = cardTrader
-    @cardTrader.setBcDice(self)
 
     @nick_e = ""
     @tnick = ""
@@ -127,10 +121,6 @@ class BCDice
   end
 
   attr_reader :nick_e
-
-  def readExtraCard(cardFileName)
-    @cardTrader.readExtraCard(cardFileName)
-  end
 
   def setIrcClient(client)
     @ircClient = client
@@ -172,49 +162,6 @@ class BCDice
 
   def printErrorMessage(e)
     sendMessageToOnlySender("error " + e.to_s + e.backtrace.join("\n"))
-  end
-
-  def recieveMessageCatched(nick_e, tnick)
-    debug('recieveMessage nick_e, tnick', nick_e, tnick)
-
-    @nick_e = nick_e
-    @cardTrader.setTnick(@nick_e)
-
-    @tnick = tnick
-    @cardTrader.setTnick(@tnick)
-
-    debug("@nick_e, @tnick", @nick_e, @tnick)
-
-    # ===== 設定関係 ========
-    setMatches = @message.match(SET_COMMAND_PATTERN)
-    if setMatches
-      setCommand(setMatches[1])
-      return
-    end
-
-    # ポイントカウンター関係
-    executePointCounter
-
-    # プロット入力処理
-    addPlot(@messageOriginal.clone)
-
-    # ボット終了命令
-    case @message
-    when $quitCommand
-      quit
-
-    when /^mode$/i
-      # モード確認
-      checkMode()
-
-    when /^help$/i
-      # 簡易オンラインヘルプ
-      printHelp()
-
-    when /^c-help$/i
-      @cardTrader.printCardHelp()
-
-    end
   end
 
   def quit
@@ -389,12 +336,6 @@ class BCDice
     end
   end
 
-  def setCardMode()
-    return unless isMaster()
-
-    @cardTrader.setCardMode()
-  end
-
   def setSpellMode()
     return unless  isMaster()
 
@@ -421,12 +362,6 @@ class BCDice
     else
       sendMessageToChannels("タップ不可モードに変更しました")
     end
-  end
-
-  def readCardSet()
-    return unless isMaster()
-
-    @cardTrader.readCardSet()
   end
 
   def executePointCounter
@@ -694,11 +629,7 @@ class BCDice
   end
 
   def executeCard
-    debug('executeCard begin')
-    @cardTrader.setNick(@nick_e)
-    @cardTrader.setTnick(@tnick)
-    @cardTrader.executeCard(@message, @channel)
-    debug('executeCard end')
+    # empty
   end
 
   ###########################################################################
@@ -1520,8 +1451,6 @@ class BCDice
   # @return [String] ゲームを設定したことを示すメッセージ
   def setGameByTitle(gameTitle)
     debug('setGameByTitle gameTitle', gameTitle)
-
-    @cardTrader.initValues
 
     loader = DiceBotLoaderList.find(gameTitle)
     diceBot =

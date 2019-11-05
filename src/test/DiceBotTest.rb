@@ -117,12 +117,12 @@ class DiceBotTest
           # テスト失敗、次へ
           next
         end
-      rescue StandardError => e
-        @errorLog << logTextForException(e, testData)
-        print('E')
+      # rescue StandardError => e
+      #   @errorLog << logTextForException(e, testData)
+      #   print('E')
 
-        # テスト失敗、次へ
-        next
+      #   # テスト失敗、次へ
+      #   next
       end
 
       # テスト成功

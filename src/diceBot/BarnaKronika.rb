@@ -9,18 +9,6 @@ class BarnaKronika < DiceBot
     @sortType = 3
   end
 
-  # ダイスボット設定後に行う処理
-  # @return [void]
-  def postSet
-    if bcdice
-      bcdice.cardTrader.set1Deck2Jokers
-      # 手札の他のカード置き場
-      bcdice.cardTrader.card_place = 0
-      # 場札のタップ処理の必要があるか？
-      bcdice.cardTrader.canTapCard = false
-    end
-  end
-
   def gameName
     'バルナ・クロニカ'
   end

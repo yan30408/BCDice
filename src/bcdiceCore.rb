@@ -38,9 +38,6 @@ require 'dice/UpperDice'
 require 'dice/RerollDice'
 
 class BCDice
-  # 設定コマンドのパターン
-  SET_COMMAND_PATTERN = /\Aset\s+(.+)/i.freeze
-
   VERSION = "2.03.04".freeze
 
   attr_reader :roll_result
@@ -79,17 +76,9 @@ class BCDice
   attr_reader :nick_e
 
   def setMessage(message)
-    # 設定で変化し得るためopen系はここで正規表現を作る
-    openPattern = /\A\s*(?:#{$OPEN_DICE}|#{$OPEN_PLOT})\s*\z/i
+    # 空白が含まれる場合、最初の部分だけを取り出す
+    messageToSet = message.split(/\s/, 2).first
 
-    messageToSet =
-      case message
-      when openPattern, SET_COMMAND_PATTERN
-        message
-      else
-        # 空白が含まれる場合、最初の部分だけを取り出す
-        message.split(/\s/, 2).first
-      end
     debug("setMessage messageToSet", messageToSet)
 
     @messageOriginal = parren_killer(messageToSet)

@@ -3,7 +3,6 @@
 
 require 'log'
 require 'configBcDice.rb'
-require 'CountHolder.rb'
 require 'kconv'
 require 'utils/ArithmeticEvaluator.rb'
 

@@ -83,8 +83,6 @@ class BCDice
 
   VERSION = "2.03.04".freeze
 
-  attr_reader :cardTrader
-
   def initialize(diceBot)
     setDiceBot(diceBot)
 
@@ -94,7 +92,6 @@ class BCDice
     @rands = nil
     @isKeepSecretDice = true
     @randResults = nil
-    @isIrcMode = true
   end
 
   # Unused method
@@ -1441,12 +1438,10 @@ class BCDice
   end
 
   def setIrcMode(mode)
-    @isIrcMode = mode
+    # empty
   end
 
   def sleepForIrc(second)
-    if @isIrcMode
-      sleep(second)
-    end
+    # empty
   end
 end

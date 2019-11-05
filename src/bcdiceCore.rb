@@ -340,18 +340,10 @@ class BCDice
       return
     end
 
-    channel = getPrintPlotChannel(@nick_e)
-    debug("getPrintPlotChannel get channel", channel)
-
-    if channel == "1"
-      sendMessageToOnlySender("表示チャンネルが登録されていません")
-      return
-    end
-
     arg += "->#{@tnick}" unless @tnick.empty?
 
     pointerMode = :sameNick
-    output, pointerMode = countHolder.executeCommand(arg, @nick_e, channel, pointerMode)
+    output, pointerMode = countHolder.executeCommand(arg, "", channel, pointerMode)
     debug("point_counter_command called, line", __LINE__)
     debug("output", output)
     debug("pointerMode", pointerMode)
@@ -374,26 +366,7 @@ class BCDice
   end
 
   def addPlot(arg)
-    debug("addPlot begin arg", arg)
-
-    unless /#{$ADD_PLOT}[:：](.+)/i =~ arg
-      debug("addPlot exit")
-      return
-    end
-    plot = Regexp.last_match(1)
-
-    channel = getPrintPlotChannel(@nick_e)
-
-    debug('addPlot channel', channel)
-
-    if channel.nil?
-      debug('channel.nil?')
-      sendMessageToOnlySender("プロット出力先が登録されていません")
-    else
-      debug('addToSecretDiceResult calling...')
-      addToSecretDiceResult(plot, channel, 1)
-      sendMessage(channel, "#{@nick_e} さんがプロットしました")
-    end
+    # empty
   end
 
   def getPrintPlotChannel(nick)
@@ -481,8 +454,6 @@ class BCDice
     debug("recievePublicMessageCatched @channel", @channel)
     debug("recievePublicMessageCatched @message", @message)
 
-    @nick_e = nick_e
-
     # プロットやシークレットダイス用に今のチャンネル名を記憶
     setChannelForPlotOrSecretDice
 
@@ -505,7 +476,7 @@ class BCDice
     if /(^|\s)C([-\d]+)\s*$/i =~ @message
       output = Regexp.last_match(2)
       if output != ""
-        sendMessage(@channel, "#{@nick_e}: 計算結果 ＞ #{output}")
+        sendMessage(@channel, ": 計算結果 ＞ #{output}")
       end
     end
 
@@ -536,14 +507,7 @@ class BCDice
   end
 
   def setChannelForPlotOrSecretDice
-    debug("setChannelForPlotOrSecretDice Begin")
-
-    return if isTalkChannel
-
-    channel = getPrintPlotChannel(@nick_e)
-    if channel.nil?
-      setPrintPlotChannel
-    end
+    # empty
   end
 
   def isTalkChannel
@@ -580,7 +544,7 @@ class BCDice
       output += "###secret dice###"
     end
 
-    broadmsg(output, @nick_e)
+    broadmsg(output)
 
     if @isKeepSecretDice
       addToSecretDiceResult(output, @channel, 0)
@@ -607,7 +571,7 @@ class BCDice
 
     debug('dice_command arg', arg)
 
-    output, secret = @diceBot.dice_command(@message, @nick_e)
+    output, secret = @diceBot.dice_command(@message, "")
     return output, secret if output != '1'
 
     output, secret = rollD66(arg)
@@ -666,7 +630,7 @@ class BCDice
 
     secret = !Regexp.last_match(1).nil?
 
-    output = @diceBot.dice_command_xRn(arg, @nick_e)
+    output = @diceBot.dice_command_xRn(arg, "")
     return nil if  output.nil? || (output == '1')
 
     if output.empty?
@@ -943,7 +907,7 @@ class BCDice
       output = "#{output} ＞ 成功数#{suc}"
       output += @diceBot.getGrichText(numberSpot1, dice_cnt_total, suc)
     end
-    output = "#{@nick_e}: (#{string}) ＞ #{output}"
+    output = ": (#{string}) ＞ #{output}"
 
     return output
   end
@@ -976,7 +940,7 @@ class BCDice
     d66Text = d66List.join(',')
     debug('d66Text', d66Text)
 
-    output = "#{@nick_e}: (#{string}) ＞ #{d66Text}"
+    output = ": (#{string}) ＞ #{d66Text}"
 
     return output, secret
   end
@@ -1074,14 +1038,7 @@ class BCDice
   end
 
   def getNick(nick = nil)
-    nick ||= @nick_e
-    nick = nick.upcase
-
-    if /[_\d]*(.+)[_\d]*/ =~ nick
-      nick = Regexp.last_match(1) # Nick端の数字はカウンター変わりに使われることが多いので除去
-    end
-
-    return nick
+    return ""
   end
 
   def addToSecretDiceResult(diceResult, channel, mode)
@@ -1155,7 +1112,7 @@ class BCDice
     targets = targetList.split(/,/)
     index = rand(targets.length)
     target = targets[index]
-    output = "#{@nick_e}: (#{string}) ＞ #{target}"
+    output = ": (#{string}) ＞ #{target}"
 
     return output
   end
@@ -1308,19 +1265,14 @@ class BCDice
   # **                              出力関連
   ###########################################################################
 
-  def broadmsg(output, nick)
-    debug("broadmsg output, nick", output, nick)
-    debug("@nick_e", @nick_e)
+  def broadmsg(output)
+    debug("broadmsg output, nick", output)
 
     if output == "1"
       return
     end
 
-    if  nick == @nick_e
-      sendMessageToOnlySender(output) # encode($ircCode, output))
-    else
-      sendMessage(nick, output)
-    end
+    sendMessageToOnlySender(output)
   end
 
   def sendMessage(to, message)
@@ -1330,8 +1282,7 @@ class BCDice
 
   def sendMessageToOnlySender(message)
     debug("sendMessageToOnlySender message", message)
-    debug("@nick_e", @nick_e)
-    @ircClient.sendMessageToOnlySender(@nick_e, message)
+    @ircClient.sendMessageToOnlySender("", message)
   end
 
   def sendMessageToChannels(message)

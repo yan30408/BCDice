@@ -106,11 +106,6 @@ class BCDice
     return @roll_result
   end
 
-  # Unused method
-  def setDir(_dir, _prefix)
-    nil
-  end
-
   def isKeepSecretDice(b)
     @isKeepSecretDice = b
   end
@@ -127,10 +122,6 @@ class BCDice
   end
 
   attr_reader :nick_e
-
-  def setIrcClient(client)
-    # empty
-  end
 
   def setMessage(message)
     # 設定で変化し得るためopen系はここで正規表現を作る
@@ -170,318 +161,13 @@ class BCDice
     sendMessageToOnlySender("error " + e.to_s + e.backtrace.join("\n"))
   end
 
-  def quit
-    # empty
-  end
-
-  def setQuitFuction(func)
-    # empty
-  end
-
-  def setCommand(arg)
-    debug('setCommand arg', arg)
-
-    case arg.downcase
-    when 'master'
-      # マスター登録
-      setMaster()
-
-    when 'game'
-      # ゲーム設定
-      setGame()
-
-    when /\Av(?:iew\s*)?mode\z/
-      # 表示モード設定
-      setDisplayMode()
-
-    when 'upper'
-      # 上方無限ロール閾値設定 0=Clear
-      setUpplerRollThreshold()
-
-    when 'reroll'
-      # 個数振り足しロール回数制限設定 0=無限
-      setRerollLimit()
-
-    when /\Ar(?:ating\s*)?t(?:able)?\z/
-      # レーティング表設定
-      setRatingTable()
-
-    when 'sort'
-      # ソートモード設定
-      setSortMode()
-
-    when 'cardplace', 'cp'
-      # カードモード設定
-      setCardMode()
-
-    when 'shortspell', 'ss'
-      # 呪文モード設定
-      setSpellMode()
-
-    when 'tap'
-      # タップモード設定
-      setTapMode()
-
-    when 'cardset', 'cs'
-      # カード読み込み
-      readCardSet()
-    end
-  end
-
-  def setMaster()
-    # empty
-  end
-
-  def setMasterWhenMasterAlreadySet()
-    # empty
-  end
-
-  def setMasterByCurrentMasterOwnself()
-    # empty
-  end
-
-  def setMasterWhenMasterYetSet()
-    # empty
-  end
-
-  def setGame()
-    messages = setGameByTitle(@tnick)
-    sendMessageToChannels(messages)
-  end
-
-  def isMaster()
-    # empty
-  end
-
-  def setDisplayMode()
-    return unless  isMaster()
-
-    return unless  /(\d+)/ =~ @tnick
-
-    mode = Regexp.last_match(1).to_i
-    @diceBot.setSendMode(mode)
-
-    sendMessageToChannels("ViewMode#{@diceBot.sendMode}に変更しました")
-  end
-
-  def setUpplerRollThreshold()
-    return unless  isMaster()
-
-    return unless  /(\d+)/ =~ @tnick
-
-    @diceBot.upplerRollThreshold = Regexp.last_match(1).to_i
-
-    if @diceBot.upplerRollThreshold > 0
-      sendMessageToChannels("上方無限ロールを#{@diceBot.upplerRollThreshold}以上に設定しました")
-    else
-      sendMessageToChannels("上方無限ロールの閾値設定を解除しました")
-    end
-  end
-
-  def setRerollLimit()
-    return unless  isMaster()
-
-    return unless  /(\d+)/ =~ @tnick
-
-    @diceBot.rerollLimitCount = Regexp.last_match(1).to_i
-
-    if @diceBot.rerollLimitCount > 0
-      sendMessageToChannels("個数振り足しロール回数を#{@diceBot.rerollLimitCount}以下に設定しました")
-    else
-      sendMessageToChannels("個数振り足しロールの回数を無限に設定しました")
-    end
-  end
-
-  def setRatingTable()
-    return unless isMaster()
-
-    output = @diceBot.setRatingTable(@tnick)
-    return if output == '1'
-
-    sendMessageToChannels(output)
-  end
-
-  def setSortMode()
-    return unless  isMaster()
-
-    return unless  /(\d+)/ =~ @tnick
-
-    sortType = Regexp.last_match(1).to_i
-    @diceBot.setSortType(sortType)
-
-    if @diceBot.sortType != 0
-      sendMessageToChannels("ソート有りに変更しました")
-    else
-      sendMessageToChannels("ソート無しに変更しました")
-    end
-  end
-
-  def setSpellMode()
-    return unless  isMaster()
-
-    return unless  /(\d+)/ =~ @tnick
-
-    @isShortSpell = (Regexp.last_match(1).to_i != 0)
-
-    if @isShortSpell
-      sendMessageToChannels("短い呪文モードに変更しました")
-    else
-      sendMessageToChannels("通常呪文モードに変更しました")
-    end
-  end
-
-  def setTapMode()
-    return unless  isMaster()
-
-    return unless  /(\d+)/ =~ @tnick
-
-    @canTapCard = (Regexp.last_match(1).to_i != 0)
-
-    if @canTapCard
-      sendMessageToChannels("タップ可能モードに変更しました")
-    else
-      sendMessageToChannels("タップ不可モードに変更しました")
-    end
-  end
-
-  def executePointCounter
-    arg = @messages
-    debug("executePointCounter arg", arg)
-
-    unless arg =~ /^#/
-      debug("executePointCounter is NOT matched")
-      return
-    end
-
-    arg += "->#{@tnick}" unless @tnick.empty?
-
-    pointerMode = :sameNick
-    output, pointerMode = countHolder.executeCommand(arg, "", channel, pointerMode)
-    debug("point_counter_command called, line", __LINE__)
-    debug("output", output)
-    debug("pointerMode", pointerMode)
-
-    if output == "1"
-      debug("executePointCounter point_counter_command output is \"1\"")
-      return
-    end
-
-    case pointerMode
-    when :sameNick
-      debug("executePointCounter:Talkで返事")
-      sendMessageToOnlySender(output)
-    when :sameChannel
-      debug("executePointCounter:publicで返事")
-      sendMessage(channel, output)
-    end
-
-    debug("executePointCounter end")
-  end
-
-  def addPlot(arg)
-    # empty
-  end
-
-  def getPrintPlotChannel(nick)
-    nick = getNick(nick)
-    return $plotPrintChannels[nick]
-  end
-
-  def checkMode()
-    return unless isMaster()
-
-    output = "GameType = " + @diceBot.gameType + ", ViewMode = " + @diceBot.sendMode + ", Sort = " + @diceBot.sortType
-    sendMessageToOnlySender(output)
-  end
-
-  # 簡易オンラインヘルプを表示する
-  def printHelp
-    send_to_sender = lambda { |message| sendMessageToOnlySender message }
-
-    [
-      "・加算ロール　　　　　　　　(xDn) (n面体ダイスをx個)",
-      "・バラバラロール　　　　　　(xBn)",
-      "・個数振り足しロール　　　　(xRn[振り足し値])",
-      "・上方無限ロール　　　　　　(xUn[境界値])",
-      "・シークレットロール　　　　(Sダイスコマンド)",
-      "・シークレットをオープンする(#{$OPEN_DICE})",
-      "・四則計算(端数切捨て)　　　(C(式))"
-    ].each(&send_to_sender)
-
-    sleepForIrc 2
-
-    @diceBot.getHelpMessage.lines.each_slice(5) do |lines|
-      lines.each(&send_to_sender)
-      sleepForIrc 1
-    end
-
-    sendMessageToOnlySender "  ---"
-
-    sleepForIrc 1
-
-    [
-      "・プロット表示　　　　　　　　(#{$OPEN_PLOT})",
-      "・プロット記録　　　　　　　　(Talkで #{$ADD_PLOT}:プロット)",
-      "  ---"
-    ].each(&send_to_sender)
-
-    sleepForIrc 2
-
-    [
-      "・ポイントカウンタ値登録　　　(#[名前:]タグn[/m]) (識別名、最大値省略可,Talk可)",
-      "・カウンタ値操作　　　　　　　(#[名前:]タグ+n) (もちろん-nもOK,Talk可)",
-      "・識別名変更　　　　　　　　　(#RENAME!名前1->名前2) (Talk可)"
-    ].each(&send_to_sender)
-
-    sleepForIrc 1
-
-    [
-      "・同一タグのカウンタ値一覧　　(#OPEN!タグ)",
-      "・自キャラのカウンタ値一覧　　(Talkで#OPEN![タグ]) (全カウンタ表示時、タグ省略)",
-      "・自キャラのカウンタ削除　　　(#[名前:]DIED!) (デフォルト時、識別名省略)",
-      "・全自キャラのカウンタ削除　　(#ALL!:DIED!)",
-      "・カウンタ表示チャンネル登録　(#{$READY_CMD})",
-      "  ---"
-    ].each(&send_to_sender)
-
-    sleepForIrc 2
-
-    sendMessageToOnlySender "・カード機能ヘルプ　　　　　　(c-help)"
-
-    sendMessageToOnlySender "  -- END ---"
-  end
-
-  def setChannel(channel)
-    debug("setChannel called channel", channel)
-    @channel = channel
-  end
-
   def recievePublicMessage(nick_e)
     recievePublicMessageCatched(nick_e)
   rescue StandardError => e
     printErrorMessage(e)
   end
 
-  def recievePublicMessageCatched(nick_e)
-    debug("recievePublicMessageCatched begin nick_e", nick_e)
-    debug("recievePublicMessageCatched @channel", @channel)
-    debug("recievePublicMessageCatched @message", @message)
-
-    # プロットやシークレットダイス用に今のチャンネル名を記憶
-    setChannelForPlotOrSecretDice
-
-    # プロットの表示
-    if /(^|\s+)#{$OPEN_PLOT}(\s+|$)/i =~ @message
-      debug('print plot', @message)
-      printPlot()
-    end
-
-    # シークレットロールの表示
-    if /(^|\s+)#{$OPEN_DICE}(\s+|$)/i =~ @message
-      debug('print secret roll', @message)
-      printSecretRoll()
-    end
-
+  def recievePublicMessageCatched(_nick_e)
     # ダイスロールの処理
     executeDiceRoll
 
@@ -496,46 +182,7 @@ class BCDice
     # ここから大文字・小文字を考慮するようにメッセージを変更
     changeMessageOriginal
 
-    # カード処理
-    executeCard
-
     debug("\non_public end")
-  end
-
-  def printPlot
-    debug("printPlot begin")
-    messageList = openSecretRoll(@channel, 1)
-    debug("messageList", messageList)
-
-    messageList.each do |message|
-      if message.empty?
-        debug("message is empty")
-        setPrintPlotChannel
-      else
-        debug("message", message)
-        sendMessage(@channel, message)
-        sleepForIrc 1
-      end
-    end
-  end
-
-  def setChannelForPlotOrSecretDice
-    # empty
-  end
-
-  def isTalkChannel
-    !(/^#/ === @channel)
-  end
-
-  def printSecretRoll
-    outputs = openSecretRoll(@channel, 0)
-
-    outputs.each do |diceResult|
-      next if diceResult.empty?
-
-      sendMessage(@channel, diceResult)
-      sleepForIrc 1
-    end
   end
 
   def executeDiceRoll
@@ -562,10 +209,6 @@ class BCDice
     if @isKeepSecretDice
       addToSecretDiceResult(output, @channel, 0)
     end
-  end
-
-  def executeCard
-    # empty
   end
 
   ###########################################################################
@@ -599,9 +242,6 @@ class BCDice
     return output, secret unless output.nil?
 
     output, secret = checkChoiceCommand(arg)
-    return output, secret unless output.nil?
-
-    output, secret = getTableDataResult(arg)
     return output, secret unless output.nil?
 
     output = '1'
@@ -677,11 +317,6 @@ class BCDice
     output = choice_random(Regexp.last_match(1))
 
     return output, secret
-  end
-
-  # Unused method.
-  def getTableDataResult(_arg)
-    nil
   end
 
   def getTableIndexDiceValueAndDiceText(dice)
@@ -804,10 +439,6 @@ class BCDice
     return total, dice_str, numberSpot1, cnt_max, n_max, cnt_suc, rerollCount
   end
 
-  def setRandomValues(rands)
-    @rands = rands
-  end
-
   def rand(max)
     debug('rand called @rands', @rands)
 
@@ -823,14 +454,6 @@ class BCDice
     end
 
     return value
-  end
-
-  def setCollectRandResult(b)
-    if b
-      @randResults = []
-    else
-      @randResults = nil
-    end
   end
 
   def getRandResults
@@ -1384,13 +1007,5 @@ class BCDice
     debug('setGameByTitle message', message)
 
     return message
-  end
-
-  def setIrcMode(mode)
-    # empty
-  end
-
-  def sleepForIrc(second)
-    # empty
   end
 end

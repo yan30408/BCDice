@@ -64,8 +64,6 @@ class BCDiceMaker
     @cardTrader = CardTrader.new
     @cardTrader.initValues
 
-    @counterInfos = {}
-
     @master = ""
     @quitFunction = nil
   end
@@ -76,7 +74,7 @@ class BCDiceMaker
   attr_accessor :diceBotPath
 
   def newBcDice
-    bcdice = BCDice.new(self, @cardTrader, @diceBot, @counterInfos)
+    bcdice = BCDice.new(self, @cardTrader, @diceBot)
 
     return bcdice
   end
@@ -90,14 +88,13 @@ class BCDice
 
   attr_reader :cardTrader
 
-  def initialize(parent, cardTrader, diceBot, counterInfos)
+  def initialize(parent, cardTrader, diceBot)
     @parent = parent
 
     setDiceBot(diceBot)
 
     @cardTrader = cardTrader
     @cardTrader.setBcDice(self)
-    @counterInfos = counterInfos
 
     @nick_e = ""
     @tnick = ""
@@ -599,9 +596,6 @@ class BCDice
       printSecretRoll()
     end
 
-    # ポイントカウンター関係
-    executePointCounterPublic
-
     # ダイスロールの処理
     executeDiceRoll
 
@@ -666,34 +660,6 @@ class BCDice
 
       sendMessage(@channel, diceResult)
       sleepForIrc 1
-    end
-  end
-
-  def executePointCounterPublic
-    debug("executePointCounterPublic begin")
-
-    if /^#{$READY_CMD}(\s+|$)/i =~ @message
-      setPrintPlotChannel
-      sendMessageToOnlySender("表示チャンネルを設定しました")
-      return
-    end
-
-    unless /^#/ =~ @message
-      debug("executePointCounterPublic NOT match")
-      return
-    end
-
-    pointerMode = :sameChannel
-    countHolder = CountHolder.new(self, @counterInfos)
-    output, secret = countHolder.executeCommand(@message, @nick_e, @channel, pointerMode)
-    debug("executePointCounterPublic output, secret", output, secret)
-
-    if secret
-      debug("is secret")
-      sendMessageToOnlySender(output) if output != "1"
-    else
-      debug("is NOT secret")
-      sendMessage(@channel, output) if output != "1"
     end
   end
 

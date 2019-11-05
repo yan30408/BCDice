@@ -117,12 +117,12 @@ class DiceBotTest
           # テスト失敗、次へ
           next
         end
-      # rescue StandardError => e
-      #   @errorLog << logTextForException(e, testData)
-      #   print('E')
+      rescue StandardError => e
+        @errorLog << logTextForException(e, testData)
+        print('E')
 
-      #   # テスト失敗、次へ
-      #   next
+        # テスト失敗、次へ
+        next
       end
 
       # テスト成功
@@ -140,7 +140,7 @@ class DiceBotTest
 
     result = ''
     testData.input.each do |message|
-      result += @bot.roll(message, testData.gameType, @tableDir).first
+      result += @bot.roll(message, testData.gameType).first
     end
 
     unless rands.empty?

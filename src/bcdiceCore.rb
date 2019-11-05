@@ -85,16 +85,25 @@ class BCDice
 
   attr_reader :roll_result
 
-  def initialize(diceBot)
-    setDiceBot(diceBot)
+  def initialize(game_type: "DiceBot", rands: nil, test_mode: false)
+    setGameByTitle(game_type)
 
     @nick_e = ""
     @tnick = ""
-    @rands = nil
+    @rands = rands
     @isKeepSecretDice = true
-    @randResults = nil
+    @randResults = []
+    @isTest = test_mode
 
+    @channel = "" # dummy
     @roll_result = ""
+  end
+
+  def eval(command)
+    setMessage(command)
+    recievePublicMessage("")
+
+    return @roll_result
   end
 
   # Unused method
@@ -553,10 +562,6 @@ class BCDice
     if @isKeepSecretDice
       addToSecretDiceResult(output, @channel, 0)
     end
-  end
-
-  def setTest(isTest)
-    @isTest = isTest
   end
 
   def executeCard
@@ -1041,7 +1046,7 @@ class BCDice
     return messages
   end
 
-  def getNick(nick = nil)
+  def getNick(_nick = nil)
     return ""
   end
 
@@ -1279,7 +1284,7 @@ class BCDice
     sendMessageToOnlySender(output)
   end
 
-  def sendMessage(to, message)
+  def sendMessage(_to, message)
     @roll_result += message
   end
 

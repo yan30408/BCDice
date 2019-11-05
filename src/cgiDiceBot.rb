@@ -70,14 +70,10 @@ class CgiDiceBot
     "#{param}\t"
   end
 
-  def roll(message, gameType, dir = nil, prefix = '', isNeedResult = false)
-    rollResult, randResults, gameType = executeDiceBot(message, gameType, dir, prefix, isNeedResult)
+  def roll(message, gameType)
+    rollResult, randResults, gameType = executeDiceBot(message, gameType)
 
     result = ""
-
-    unless @isTest
-      # result += "##>isSecretDice<##" if( @isSecret )
-    end
 
     # 多言語対応のダイスボットは「GameType:Language」という書式なので、
     # ここで言語名を削って表示する。（内部的には必要だが、表示では不要のため）
@@ -98,41 +94,14 @@ class CgiDiceBot
     @rands = rands
   end
 
-  def executeDiceBot(message, gameType, dir = nil, prefix = '', isNeedResult = false)
-    bcdice = newBcDice
+  def executeDiceBot(message, gameType)
+    bcdice = BCDice.new(:game_type => gameType, :rands => @rands, :test_mode => true)
+    gameType = bcdice.getGameType
 
-    bcdice.setIrcClient(self)
-    bcdice.setRandomValues(@rands)
-    bcdice.isKeepSecretDice(@isTest)
-    bcdice.setTest(@isTest)
-    bcdice.setCollectRandResult(isNeedResult)
-    bcdice.setDir(dir, prefix)
-    bcdice.setIrcMode(false)
-
-    if bcdice.getGameType != gameType
-      bcdice.setGameByTitle(gameType)
-      gameType = bcdice.getGameType
-    end
-
-    bcdice.setMessage(message)
-
-    channel = ""
-    nick_e = ""
-    bcdice.setChannel(channel)
-    bcdice.recievePublicMessage(nick_e)
-
-    rollResult = bcdice.roll_result
-
+    result_text = bcdice.eval(message)
     randResults = bcdice.getRandResults
 
-    return rollResult, randResults, gameType
-  end
-
-  def newBcDice
-    bcdiceMaker = BCDiceMaker.new
-    @bcdice = bcdiceMaker.newBcDice()
-
-    return @bcdice
+    return result_text, randResults, gameType
   end
 
   # Unused method

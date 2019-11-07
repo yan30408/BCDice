@@ -36,6 +36,7 @@ require 'diceBot/DiceBotLoaderList'
 require 'dice/AddDice'
 require 'dice/UpperDice'
 require 'dice/RerollDice'
+require 'utils/randomizer'
 
 class BCDice
   VERSION = "2.03.04".freeze
@@ -47,9 +48,9 @@ class BCDice
 
     @nick_e = ""
     @tnick = ""
-    @rands = rands
-    @randResults = []
     @isTest = test_mode
+
+    @rand = rands ? StaticRands.new(rands) : Randomizer.new
 
     @channel = "" # dummy
     @roll_result = ""
@@ -374,48 +375,11 @@ class BCDice
   end
 
   def rand(max)
-    debug('rand called @rands', @rands)
-
-    value = 0
-    if @rands.nil?
-      value = randNomal(max)
-    else
-      value = randFromRands(max)
-    end
-
-    unless @randResults.nil?
-      @randResults << [(value + 1), max]
-    end
-
-    return value
+    @rand.roll(1, max) - 1
   end
 
   def getRandResults
-    @randResults
-  end
-
-  def randNomal(max)
-    Kernel.rand(max)
-  end
-
-  def randFromRands(targetMax)
-    nextRand = @rands.shift
-
-    if nextRand.nil?
-      # return randNomal(targetMax)
-      raise "nextRand is nil, so @rands is empty!! @rands:#{@rands.inspect}"
-    end
-
-    value, max = nextRand
-    value = value.to_i
-    max = max.to_i
-
-    if  max != targetMax
-      # return randNomal(targetMax)
-      raise "invalid max value! [ #{value} / #{max} ] but NEED [ #{targetMax} ] dice"
-    end
-
-    return (value - 1)
+    @rand.rand_results
   end
 
   def dice_num(dice_str)

@@ -36,6 +36,7 @@ require 'diceBot/DiceBotLoaderList'
 require 'dice/AddDice'
 require 'dice/UpperDice'
 require 'dice/RerollDice'
+require 'dice/choice'
 require 'utils/randomizer'
 
 class BCDice
@@ -176,7 +177,7 @@ class BCDice
     output, secret = checkUpperRoll(arg)
     return output, secret unless output.nil?
 
-    output, secret = checkChoiceCommand(arg)
+    output, secret = Choice.roll(arg, @rand)
     return output, secret unless output.nil?
 
     output = '1'
@@ -239,17 +240,6 @@ class BCDice
     dice = UpperDice.new(self, @diceBot)
     output = dice.rollDice(arg)
     return nil if output == '1'
-
-    return output, secret
-  end
-
-  def checkChoiceCommand(arg)
-    debug("check choice command")
-
-    return nil unless /((^|\s)(S)?choice\[[^,]+(,[^,]+)+\]($|\s))/i === arg
-
-    secret = !Regexp.last_match(3).nil?
-    output = choice_random(Regexp.last_match(1))
 
     return output, secret
   end
@@ -525,31 +515,6 @@ class BCDice
     end
 
     debug("output", output)
-
-    return output
-  end
-
-  #==========================================================================
-  # **                            その他の機能
-  #==========================================================================
-  def choice_random(string)
-    output = "1"
-
-    unless /(^|\s)((S)?choice\[([^,]+(,[^,]+)+)\])($|\s)/i =~ string
-      return output
-    end
-
-    string = Regexp.last_match(2)
-    targetList = Regexp.last_match(4)
-
-    unless targetList
-      return output
-    end
-
-    targets = targetList.split(/,/)
-    index = rand(targets.length)
-    target = targets[index]
-    output = ": (#{string}) ＞ #{target}"
 
     return output
   end

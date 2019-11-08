@@ -71,6 +71,7 @@ class DiceBot
     @gameType = 'DiceBot'
 
     @randomizer = randomizer
+    @secret = false
 
     if !prefixs.empty? && self.class.prefixes.empty?
       # 従来の方法（#prefixs）で接頭辞を設定していた場合でも
@@ -85,6 +86,19 @@ class DiceBot
   attr_reader :sendMode, :sameDiceRerollCount, :sameDiceRerollType, :d66Type
   attr_reader :isPrintMaxDice, :upplerRollThreshold
   attr_reader :defaultSuccessTarget, :rerollNumber, :fractionType
+
+  # @param [String] command
+  # @return [String]
+  # @return [nil]
+  def eval(command)
+    text, secret = dice_command(command, "")
+    if text != "1"
+      @secret = secret
+      return text
+    end
+
+    return nil
+  end
 
   # ダイスボット設定後に行う処理
   # @return [void]
@@ -105,6 +119,10 @@ class DiceBot
 
   def gameName
     gameType
+  end
+
+  def secret?
+    @secret
   end
 
   # 接頭辞（反応するコマンド）の配列を返す

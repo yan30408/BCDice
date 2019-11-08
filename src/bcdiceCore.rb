@@ -160,8 +160,10 @@ class BCDice
 
     debug('dice_command arg', arg)
 
-    output, secret = @diceBot.dice_command(@message, "")
-    return output, secret if output != '1'
+    output = @diceBot.eval(@message)
+    if output
+      return output, @diceBot.secret?
+    end
 
     output, secret = rollD66(arg)
     return output, secret unless output.nil?

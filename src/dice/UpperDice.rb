@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 require 'utils/ArithmeticEvaluator'
-require 'utils/nomalize'
+require 'utils/normalize'
 
 class UpperDice
-  include Nomalize
+  include Normalize
 
   def initialize(diceBot, randomizer)
     @diceBot = diceBot
@@ -36,7 +36,7 @@ class UpperDice
 
     string = command
 
-    @signOfInequality = nomalize_operator(signOfInequalityText)
+    @signOfInequality = normalize_operator(signOfInequalityText)
     @upper = getAddRollUpperTarget(upperTarget1, upperTarget2)
 
     if @upper <= 1

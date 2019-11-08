@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 require "dice/choice"
-require "utils/nomalize"
+require "utils/normalize"
 
 class DiceBot
   # 空の接頭辞（反応するコマンド）
@@ -20,7 +20,7 @@ class DiceBot
   end
 
   include Choice
-  include Nomalize
+  include Normalize
 
   # 接頭辞（反応するコマンド）を設定する
   # @param [Array<String>] prefixes 接頭辞のパターンの配列

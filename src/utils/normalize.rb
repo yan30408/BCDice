@@ -1,8 +1,8 @@
-module Nomalize
+module Normalize
   # @param [String] op
   # @return [Symbol]
   # @return [nil]
-  def nomalize_operator(op)
+  def normalize_operator(op)
     case op
     when /<=|=</
       return :<=

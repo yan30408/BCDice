@@ -4,7 +4,7 @@
 require 'log'
 require 'configBcDice.rb'
 require 'utils/ArithmeticEvaluator.rb'
-require 'utils/nomalize'
+require 'utils/normalize'
 
 #============================== 起動法 ==============================
 # 上記設定をしてダブルクリック、
@@ -43,7 +43,7 @@ require 'utils/randomizer'
 class BCDice
   VERSION = "2.03.04".freeze
 
-  include Nomalize
+  include Normalize
 
   attr_reader :roll_result
 

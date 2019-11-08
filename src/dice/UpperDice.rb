@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 require 'utils/ArithmeticEvaluator'
+require 'utils/nomalize'
 
 class UpperDice
-  def initialize(bcdice, diceBot)
-    @bcdice = bcdice
+  include Nomalize
+
+  def initialize(diceBot, randomizer)
     @diceBot = diceBot
-    @nick_e = @bcdice.nick_e
+    @randomizer = randomizer
   end
 
   # 上方無限型ダイスロール
@@ -34,11 +36,11 @@ class UpperDice
 
     string = command
 
-    @signOfInequality = @bcdice.getMarshaledSignOfInequality(signOfInequalityText)
+    @signOfInequality = nomalize_operator(signOfInequalityText)
     @upper = getAddRollUpperTarget(upperTarget1, upperTarget2)
 
     if @upper <= 1
-      output = "#{@nick_e}: (#{string}\[#{@upper}\]#{modifier}) ＞ 無限ロールの条件がまちがっています"
+      output = ": (#{string}\[#{@upper}\]#{modifier}) ＞ 無限ロールの条件がまちがっています"
       return output
     end
 
@@ -62,18 +64,18 @@ class UpperDice
       output = "#{output} ＞ #{totalValue}"
     end
 
-    if @signOfInequality != ""
+    if @signOfInequality
       output = "#{output} ＞ 成功数#{totalSuccessCount}"
-      string += "#{@signOfInequality}#{diff}"
+      string += "#{operator_to_s(@signOfInequality)}#{diff}"
     else
       output += getMaxAndTotalValueResultStirng(maxValue, totalValue, totalDiceCount)
     end
 
-    output = "#{@nick_e}: (#{string}) ＞ #{output}"
+    output = ": (#{string}) ＞ #{output}"
 
     if output.length > $SEND_STR_MAX
-      output = "#{@nick_e}: (#{string}) ＞ ... ＞ #{totalValue}"
-      if @signOfInequality == ""
+      output = ": (#{string}) ＞ ... ＞ #{totalValue}"
+      if @signOfInequality
         output += getMaxAndTotalValueResultStirng(maxValue, totalValue, totalDiceCount)
       end
     end
@@ -113,33 +115,47 @@ class UpperDice
   end
 
   def getUpperDiceCommandResult(diceCommands, diceDiff)
+    success_count = 0
     diceStringList = []
-    totalSuccessCount = 0
-    totalDiceCount = 0
-    maxDiceValue = 0
-    totalValue = 0
+    max_dice_value = 0
 
     diceCommands.each do |diceCommand|
       diceCount, diceMax = diceCommand.split(/[uU]/).collect { |s| s.to_i }
+      diceCount = diceCount.to_i
+      diceMax = diceMax.to_i
 
       if @diceBot.upplerRollThreshold == "Max"
         @upper = diceMax
       end
 
-      total, diceString, cnt1, cnt_max, maxDiceResult, successCount, cnt_re =
-        @bcdice.roll(diceCount, diceMax, (@diceBot.sortType & 2), @upper, @signOfInequality, diceDiff)
+      ret = []
+      diceCount.times do
+        arr = roll_u_single(diceMax, @upper)
+        val = arr.sum()
+        if @signOfInequality && val.send(@signOfInequality, diceDiff)
+          success_count += 1
+        end
+        if val > max_dice_value
+          max_dice_value = val
+        end
 
-      diceStringList << diceString
+        text = arr.length == 1 ? val.to_s : "#{val}[#{arr.join(',')}]"
+        ret.push([val, text])
+      end
 
-      totalSuccessCount += successCount
-      maxDiceValue = maxDiceResult if maxDiceResult > maxDiceValue
-      totalDiceCount += diceCount
-      totalValue += total
+      if @diceBot.sortType & 2 != 0
+        ret = ret.sort()
+      end
+      text = ret.map { |x| x[1] }.join(",")
+      diceStringList.push(text)
     end
 
     totalDiceString = diceStringList.join(",")
 
-    return totalDiceString, totalSuccessCount, totalDiceCount, maxDiceValue, totalValue
+    total_dice_count = @randomizer.rand_values.length
+    total_value = @randomizer.rand_values.sum()
+
+    return totalDiceString, success_count, total_dice_count, max_dice_value, total_value
   end
 
   # 出力用にボーナス値を整形する
@@ -153,5 +169,18 @@ class UpperDice
     else
       bonusValue.to_s
     end
+  end
+
+  # @result [Array<Integer>]
+  def roll_u_single(sides, threshold)
+    ret = []
+    loop do
+      val = @randomizer.rand(sides)
+      ret.push(val)
+      unless val >= threshold
+        break
+      end
+    end
+    return ret
   end
 end

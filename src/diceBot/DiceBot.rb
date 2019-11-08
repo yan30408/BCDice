@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 require "dice/choice"
+require "utils/nomalize"
 
 class DiceBot
   # 空の接頭辞（反応するコマンド）
@@ -19,6 +20,7 @@ class DiceBot
   end
 
   include Choice
+  include Nomalize
 
   # 接頭辞（反応するコマンド）を設定する
   # @param [Array<String>] prefixes 接頭辞のパターンの配列
@@ -172,10 +174,6 @@ class DiceBot
 
   def roll(*args)
     @@bcdice.roll(*args)
-  end
-
-  def marshalSignOfInequality(*args)
-    @@bcdice.marshalSignOfInequality(*args)
   end
 
   def unlimitedRollDiceType

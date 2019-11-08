@@ -4,6 +4,7 @@
 require 'log'
 require 'configBcDice.rb'
 require 'utils/ArithmeticEvaluator.rb'
+require 'utils/nomalize'
 
 #============================== 起動法 ==============================
 # 上記設定をしてダブルクリック、
@@ -42,6 +43,8 @@ require 'utils/randomizer'
 class BCDice
   VERSION = "2.03.04".freeze
 
+  include Nomalize
+
   attr_reader :roll_result
 
   def initialize(game_type: "DiceBot", rands: nil, test_mode: false)
@@ -49,7 +52,7 @@ class BCDice
     @tnick = ""
     @isTest = test_mode
 
-    @rand = rands ? StaticRands.new(rands) : Randomizer.new
+    @randomizer = rands ? StaticRands.new(rands) : Randomizer.new
 
     @channel = "" # dummy
     @roll_result = ""
@@ -73,7 +76,7 @@ class BCDice
 
     @diceBot = diceBot
     @diceBot.bcdice = self
-    diceBot.randomizer = @rand
+    diceBot.randomizer = @randomizer
   end
 
   attr_reader :nick_e
@@ -180,7 +183,7 @@ class BCDice
     output, secret = checkUpperRoll(arg)
     return output, secret unless output.nil?
 
-    # output, secret = Choice.roll(arg, @rand)
+    # output, secret = Choice.roll(arg, @randomizer)
     # return output, secret unless output.nil?
 
     output = '1'
@@ -240,7 +243,7 @@ class BCDice
 
     secret = !Regexp.last_match(1).nil?
 
-    dice = UpperDice.new(self, @diceBot)
+    dice = UpperDice.new(@diceBot, @randomizer)
     output = dice.rollDice(arg)
     return nil if output == '1'
 
@@ -321,7 +324,7 @@ class BCDice
       round = 0
 
       loop do
-        dice_n = @rand.rand(dice_max)
+        dice_n = @randomizer.rand(dice_max)
         dice_n -= 1 if d9_on
 
         dice_now += dice_n
@@ -368,7 +371,7 @@ class BCDice
   end
 
   def getRandResults
-    @rand.rand_results
+    @randomizer.rand_results
   end
 
   def dice_num(dice_str)
@@ -500,8 +503,8 @@ class BCDice
   def getD66(isSwap)
     output = 0
 
-    dice_a = @rand.rand(6)
-    dice_b = @rand.rand(6)
+    dice_a = @randomizer.rand(6)
+    dice_b = @randomizer.rand(6)
     debug("dice_a", dice_a)
     debug("dice_b", dice_b)
 
@@ -521,31 +524,6 @@ class BCDice
   #==========================================================================
   # **                            結果判定関連
   #==========================================================================
-  def getMarshaledSignOfInequality(text)
-    return "" if text.nil?
-
-    return marshalSignOfInequality(text)
-  end
-
-  def marshalSignOfInequality(signOfInequality) # 不等号の整列
-    case signOfInequality
-    when /(<=|=<)/
-      return "<="
-    when /(>=|=>)/
-      return ">="
-    when /(<>)/
-      return "<>"
-    when /[<]+/
-      return "<"
-    when /[>]+/
-      return ">"
-    when /[=]+/
-      return "="
-    end
-
-    return signOfInequality
-  end
-
   def check_hit(dice_now, signOfInequality, diff) # 成功数判定用
     suc = 0
 

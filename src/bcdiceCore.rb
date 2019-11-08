@@ -45,8 +45,6 @@ class BCDice
   attr_reader :roll_result
 
   def initialize(game_type: "DiceBot", rands: nil, test_mode: false)
-    setGameByTitle(game_type)
-
     @nick_e = ""
     @tnick = ""
     @isTest = test_mode
@@ -55,6 +53,8 @@ class BCDice
 
     @channel = "" # dummy
     @roll_result = ""
+
+    setGameByTitle(game_type)
   end
 
   def eval(command)
@@ -73,6 +73,7 @@ class BCDice
 
     @diceBot = diceBot
     @diceBot.bcdice = self
+    diceBot.randomizer = @rand
   end
 
   attr_reader :nick_e
@@ -318,7 +319,7 @@ class BCDice
       round = 0
 
       loop do
-        dice_n = rand(dice_max).to_i + 1
+        dice_n = @rand.rand(dice_max)
         dice_n -= 1 if d9_on
 
         dice_now += dice_n
@@ -362,10 +363,6 @@ class BCDice
     end
 
     return total, dice_str, numberSpot1, cnt_max, n_max, cnt_suc, rerollCount
-  end
-
-  def rand(max)
-    @rand.roll(1, max) - 1
   end
 
   def getRandResults
@@ -501,8 +498,8 @@ class BCDice
   def getD66(isSwap)
     output = 0
 
-    dice_a = rand(6) + 1
-    dice_b = rand(6) + 1
+    dice_a = @rand.rand(6)
+    dice_b = @rand.rand(6)
     debug("dice_a", dice_a)
     debug("dice_b", dice_b)
 

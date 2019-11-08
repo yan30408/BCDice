@@ -52,7 +52,9 @@ class DiceBot
 
   @@DEFAULT_SEND_MODE = 2 # デフォルトの送信形式(0=結果のみ,1=0+式,2=1+ダイス個別)
 
-  def initialize
+  attr_writer :randomizer
+
+  def initialize(randomizer: Randomizer.new)
     @sendMode = @@DEFAULT_SEND_MODE # (0=結果のみ,1=0+式,2=1+ダイス個別)
     @sortType = 0 # ソート設定(1 = 足し算ダイスでソート有, 2 = バラバラロール（Bコマンド）でソート有, 3 = １と２両方ソート有）
     @sameDiceRerollCount = 0 # ゾロ目で振り足し(0=無し, 1=全部同じ目, 2=ダイスのうち2個以上同じ目)
@@ -67,6 +69,8 @@ class DiceBot
     @fractionType = "omit" # 端数の処理 ("omit"=切り捨て, "roundUp"=切り上げ, "roundOff"=四捨五入)
 
     @gameType = 'DiceBot'
+
+    @randomizer = randomizer
 
     if !prefixs.empty? && self.class.prefixes.empty?
       # 従来の方法（#prefixs）で接頭辞を設定していた場合でも
@@ -133,7 +137,7 @@ class DiceBot
   end
 
   def rand(max)
-    @@bcdice.rand(max)
+    @randomizer.roll(1, max) - 1
   end
 
   def check_suc(*params)

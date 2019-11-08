@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+require "dice/choice"
+
 class DiceBot
   # 空の接頭辞（反応するコマンド）
   EMPTY_PREFIXES_PATTERN = /(^|\s)(S)?()(\s|$)/i.freeze
@@ -15,6 +17,8 @@ class DiceBot
   class << self
     attr_reader :prefixesPattern
   end
+
+  include Choice
 
   # 接頭辞（反応するコマンド）を設定する
   # @param [Array<String>] prefixes 接頭辞のパターンの配列
@@ -94,6 +98,10 @@ class DiceBot
     text, secret = dice_command(command, "")
     if text != "1"
       @secret = secret
+      return text
+    end
+
+    if (text = eval_choice(command))
       return text
     end
 

@@ -194,7 +194,7 @@ class BCDice
   def checkAddRoll(arg)
     debug("check add roll")
 
-    dice = AddDice.new(self, @diceBot)
+    dice = AddDice.new(@diceBot, @randomizer)
     output = dice.rollDice(arg)
     return nil if output == '1'
 
@@ -691,7 +691,7 @@ class BCDice
   end
 
   def rollDiceAddingUp(*arg)
-    dice = AddDice.new(self, @diceBot)
+    dice = AddDice.new(@diceBot, @randomizer)
     dice.rollDiceAddingUp(*arg)
   end
 

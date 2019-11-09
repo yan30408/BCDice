@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
+require "utils/ArithmeticEvaluator"
+require "utils/normalize"
+
 class AddDice
-  def initialize(bcdice, diceBot)
-    @bcdice = bcdice
+  include Normalize
+
+  def initialize(diceBot, randomizer)
     @diceBot = diceBot
-    @nick_e = @bcdice.nick_e
+    @randomizer = randomizer
   end
 
   ####################             加算ダイス        ########################
@@ -26,7 +30,7 @@ class AddDice
     if judgeText
       isCheckSuccess = true
       string = m[3]
-      signOfInequality = @bcdice.marshalSignOfInequality(judgeOperator)
+      signOfInequality = marshalSignOfInequality(judgeOperator)
     end
 
     dice_cnt = 0
@@ -76,21 +80,20 @@ class AddDice
     addText, revision = @diceBot.getDiceRevision(n_max, dice_max, total_n)
     debug('addText, revision', addText, revision)
 
-    debug("@nick_e", @nick_e)
     if @diceBot.sendMode > 0
       if output =~ /[^\d\[\]]+/
-        output = "#{@nick_e}: (#{string}) ＞ #{output} ＞ #{total_n}#{addText}"
+        output = ": (#{string}) ＞ #{output} ＞ #{total_n}#{addText}"
       else
-        output = "#{@nick_e}: (#{string}) ＞ #{total_n}#{addText}"
+        output = ": (#{string}) ＞ #{total_n}#{addText}"
       end
     else
-      output = "#{@nick_e}: (#{string}) ＞ #{total_n}#{addText}"
+      output = ": (#{string}) ＞ #{total_n}#{addText}"
     end
 
     total_n += revision
 
     if signOfInequality != "" # 成功度判定処理
-      successText = @bcdice.check_suc(total_n, dice_n, signOfInequality, diffText, dice_cnt, dice_max, n1, n_max)
+      successText = check_suc(total_n, dice_n, signOfInequality, diffText, dice_cnt, dice_max, n1, n_max)
       debug("check_suc successText", successText)
       output += successText
     end
@@ -132,13 +135,14 @@ class AddDice
 
     debug("double_check", double_check)
 
+    arithmethic = ArithmeticEvaluator.new
     while (m = /(^([\d]+\*[\d]+)\*(.+)|(.+)\*([\d]+\*[\d]+)$|(.+)\*([\d]+\*[\d]+)\*(.+))/.match(string))
       if  m[2]
-        string = @bcdice.parren_killer('(' + m[2] + ')') + '*' + m[3]
+        string = arithmethic.eval(m[2]).to_s + '*' + m[3]
       elsif  m[5]
-        string = m[4] + '*' + @bcdice.parren_killer('(' + m[5] + ')')
+        string = m[4] + '*' + arithmethic.eval(m[5]).to_s
       elsif  m[7]
-        string = m[6] + '*' + @bcdice.parren_killer('(' + m[7] + ')') + '*' + m[8]
+        string = m[6] + '*' + arithmethic.eval(m[7]).to_s + '*' + m[8]
       end
     end
 
@@ -290,19 +294,34 @@ class AddDice
     end
   end
 
-  def rollLocal(dice_wk, dice_max, sortType)
-    if dice_max == 66
-      return rollD66(dice_wk)
+  # @return [Array<(Integer, String, Integer, Integer)>] 合計, ダイスのカンマ区切り, 出目1の数, 出目最大の数
+  def rollLocal(times, sides, sort_type)
+    if sides == 66
+      return rollD66(times)
     end
 
-    return @bcdice.roll(dice_wk, dice_max, sortType)
+    unless (times <= $DICE_MAXCNT) && (sides <= $DICE_MAXNUM)
+      return 0, "", 0, 0
+    end
+
+    arr = @randomizer.roll_barabara(times, sides)
+    if sort_type != 0
+      arr = arr.sort()
+    end
+
+    value = arr.sum()
+    text = arr.join(",")
+    n1_count = arr.count(1)
+    nsides_count = arr.count(sides)
+
+    return value, text, n1_count, nsides_count
   end
 
   def rollD66(count)
     d66List = []
 
     count.times do
-      d66List << @bcdice.getD66Value()
+      d66List << getD66Value()
     end
 
     total = d66List.inject { |sum, i| sum + i }
@@ -311,6 +330,107 @@ class AddDice
     nMaxCount = d66List.count(66)
 
     return [total, text, n1Count, nMaxCount, 0, 0, 0]
+  end
+
+  def getD66Value(mode = nil)
+    mode ||= @diceBot.d66Type
+
+    isSwap = (mode > 1)
+    getD66(isSwap)
+  end
+
+  def getD66(isSwap)
+    output = 0
+
+    dice_a = @randomizer.rand(6)
+    dice_b = @randomizer.rand(6)
+    debug("dice_a", dice_a)
+    debug("dice_b", dice_b)
+
+    if isSwap && (dice_a > dice_b)
+      # 大小でスワップするタイプ
+      output = dice_a + dice_b * 10
+    else
+      # 出目そのまま
+      output = dice_a * 10 + dice_b
+    end
+
+    debug("output", output)
+
+    return output
+  end
+
+  def check_suc(*check_param)
+    total_n, dice_n, signOfInequality, diff, dice_cnt, dice_max, n1, n_max = *check_param
+
+    debug('check params : total_n, dice_n, signOfInequality, diff, dice_cnt, dice_max, n1, n_max',
+          total_n, dice_n, signOfInequality, diff, dice_cnt, dice_max, n1, n_max)
+
+    return "" unless /((\+|\-)?[\d]+)[)]?$/ =~ total_n.to_s
+
+    total_n = Regexp.last_match(1).to_i
+    diff = diff.to_i
+
+    check_paramNew = [total_n, dice_n, signOfInequality, diff, dice_cnt, dice_max, n1, n_max]
+
+    text = getSuccessText(*check_paramNew)
+    text ||= ""
+
+    if text.empty?
+      if signOfInequality != ""
+        debug('どれでもないけど判定するとき')
+        return check_nDx(*check_param)
+      end
+    end
+
+    return text
+  end
+
+  def getSuccessText(*check_param)
+    debug('getSuccessText begin')
+
+    _total_n, _dice_n, _signOfInequality, _diff, dice_cnt, dice_max, = *check_param
+
+    debug("dice_max, dice_cnt", dice_max, dice_cnt)
+
+    if (dice_max == 100) && (dice_cnt == 1)
+      debug('1D100判定')
+      return @diceBot.check_1D100(*check_param)
+    end
+
+    if (dice_max == 20) && (dice_cnt == 1)
+      debug('1d20判定')
+      return @diceBot.check_1D20(*check_param)
+    end
+
+    if dice_max == 10
+      debug('d10ベース判定')
+      return @diceBot.check_nD10(*check_param)
+    end
+
+    if dice_max == 6
+      if dice_cnt == 2
+        debug('2d6判定')
+        result = @diceBot.check_2D6(*check_param)
+        return result unless result.empty?
+      end
+
+      debug('xD6判定')
+      return @diceBot.check_nD6(*check_param)
+    end
+
+    return ""
+  end
+
+  def check_nDx(total_n, _dice_n, signOfInequality, diff, _dice_cnt, _dice_max, _n1, _n_max) # ゲーム別成功度判定(ダイスごちゃ混ぜ系)
+    operator_sym = normalize_operator(signOfInequality)
+
+    target = Integer(diff, :exception => false)
+    if target && total_n.send(operator_sym, target)
+      return " ＞ 成功"
+    else
+      return " ＞ 失敗"
+    end
   end
 
   def getOperatorText(rate, output)

@@ -225,7 +225,7 @@ class BCDice
     return nil if  output.nil? || (output == '1')
 
     if output.empty?
-      dice = RerollDice.new(self, @diceBot)
+      dice = RerollDice.new(@diceBot, @randomizer)
       output = dice.rollDice(arg)
     end
 

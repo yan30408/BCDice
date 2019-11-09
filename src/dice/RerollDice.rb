@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 
+require "utils/normalize"
+
 class RerollDice
-  def initialize(bcdice, diceBot)
-    @bcdice = bcdice
+  include Normalize
+
+  def initialize(diceBot, randomizer)
     @diceBot = diceBot
-    @nick_e = @bcdice.nick_e
+    @randomizer = randomizer
   end
 
   ####################        個数振り足しダイス     ########################
   def rollDice(string)
-    output = ''
-
     begin
       output = rollDiceCatched(string)
     rescue StandardError => e
       output = "#{string} ＞ " + e.to_s
     end
 
-    return "#{@nick_e}: #{output}"
+    return ": #{output}"
   end
 
   def rollDiceCatched(string)
@@ -33,6 +34,7 @@ class RerollDice
     string, braceThreshold, operator, conditionValue, atmarkThreshold = m.captures
 
     signOfInequality, diff = getCondition(operator, conditionValue)
+    operator_sym = normalize_operator(signOfInequality)
     rerollNumber = getRerollNumber(braceThreshold, atmarkThreshold, diff)
     debug('rerollNumber', rerollNumber)
 
@@ -57,13 +59,28 @@ class RerollDice
       x, n, depth = diceQueue.shift
       loopCount += 1
 
-      total, dice_str, numberSpot1, cnt_max, n_max, success, rerollCount =
-        @bcdice.roll(x, n, (@diceBot.sortType & 2), 0, signOfInequality, diff, rerollNumber)
-      debug('bcdice.roll : total, dice_str, numberSpot1, cnt_max, n_max, success, rerollCount',
-            total, dice_str, numberSpot1, cnt_max, n_max, success, rerollCount)
+      dice_list = @randomizer.roll_barabara(x, n)
+      total = dice_list.sum
+      numberSpot1 = dice_list.count(1)
+      success = if diff.nil?
+                  0
+                else
+                  dice_list.count { |val| val.send(operator_sym, diff) }
+                end
+
+      rerollCount = if rerollNumber.nil?
+                      0
+                    else
+                      dice_list.count { |val| val >= rerollNumber }
+                    end
+
+      if @diceBot.sortType & 2 != 0
+        dice_list = dice_list.sort()
+      end
+      text = dice_list.join(",")
 
       successCount += success
-      diceStrList.push(dice_str)
+      diceStrList.push(text)
       dice_cnt_total += x
 
       if depth.zero?
@@ -92,10 +109,10 @@ class RerollDice
 
   def getCondition(operator, conditionValue)
     if operator && conditionValue
-      operator = @bcdice.marshalSignOfInequality(operator)
+      operator = marshalSignOfInequality(operator)
       conditionValue = conditionValue.to_i
     elsif (m = /([<>=]+)(\d+)/.match(@diceBot.defaultSuccessTarget))
-      operator = @bcdice.marshalSignOfInequality(m[1])
+      operator = marshalSignOfInequality(m[1])
       conditionValue = m[2].to_i
     end
 

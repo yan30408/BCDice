@@ -425,12 +425,18 @@ class AddDice
   def check_nDx(total_n, _dice_n, signOfInequality, diff, _dice_cnt, _dice_max, _n1, _n_max) # ゲーム別成功度判定(ダイスごちゃ混ぜ系)
     operator_sym = normalize_operator(signOfInequality)
 
-    target = Integer(diff, :exception => false)
+    target = to_i_if_integer(diff)
     if target && total_n.send(operator_sym, target)
       return " ＞ 成功"
     else
       return " ＞ 失敗"
     end
+  end
+
+  def to_i_if_integer(str)
+    Integer(str)
+  rescue ArgumentError
+    nil
   end
 
   def getOperatorText(rate, output)
